@@ -73,3 +73,11 @@ pre-validates retrieval quality on our own eval set before any edge engineering.
 - NLU dual-head fine-tune (JointBERT-style on the chosen backbone) is the next effort;
   not part of this pre-validation.
 - Effort closed 2026-11-08; verdict and next steps in `outcome.md`.
+
+## Addendum (same day, follow-up session)
+- [x] Repo-root `README.md` written (pipeline story, examples, bake-off, shrink plan).
+- [x] `scripts/shrink_eval.py`: int8 / naive-MRL truncation / PCA quality check →
+      `eval/vector-shrink.md`. **int8 = zero measured loss** (both query regimes);
+      trunc-256 free but marginal; 128/64 dims need MRL retraining (PCA-128 is the
+      no-training fallback). See outcome.md addendum — ONNX port now only has to
+      prove latency + model-file size, vector quality is settled.

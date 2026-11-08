@@ -63,3 +63,20 @@ BM25 leg already nearly covers.
    (GLM-synthesized utterances at build time).
 3. **Geo blocker**: crack the POI join key for `california_amenities-matched-flat.db`
    (74k POIs) → H3 index in the artifact.
+
+## Addendum 2026-11-08 (later same day): shrink pre-checks
+
+`scripts/shrink_eval.py` measured int8 / truncation / PCA quality on the same 60
+questions **before** any ONNX work (dequantized-ranking ≡ int8 dot scoring; baseline
+row reproduces the bake-off exactly). Report: `eval/vector-shrink.md`.
+
+- **int8 (docs, or docs+query): zero measured loss** — identical recall/MRR/misses.
+  20.3 → 5.1 MB. Green-lights the ONNX int8 port; next steps #1 keeps only the
+  *latency/model-file* question open, vector quality is settled.
+- **Naive trunc-256 is also free in hybrid** (95%/0.87) but saves only 1.7 MB →
+  keep 384 dims.
+- **128/64 dims without MRL retraining: no** — vector MRR 0.82 → 0.73/0.68;
+  hybrid MRR −0.06…−0.10. No-training fallback if short vectors ever matter:
+  **PCA-128** (hybrid 97%/0.85). Proper fix: Matryoshka fine-tune.
+- "+2pp hybrid recall" cells at trunc-64/pca-128 are RRF fusion noise (weaker
+  vector leg → BM25 rescues a question into top-10) while MRR worsens — trust MRR.
