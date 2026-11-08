@@ -8,7 +8,9 @@ for an edge head unit. All heavy AI runs once at build time; the car only search
 Current state (Nov 2026): knowledge base built, hybrid search at **97% recall@10**
 (bge-m3) on the 60-question eval, edge embedder bake-off done —
 **`arctic-s` selected** (95% recall / 0.87 MRR, 314 ms/query on CPU, 5.1 MB of int8
-vectors), `gte-modernbert` as fallback. Next: int8 ONNX port, tiny NLU head, geo join.
+vectors), `gte-modernbert` as fallback. int8 quantization verified **loss-free** on
+the eval (§7); minimum edge artifact sized at **~18 MB** (§8).
+Next: int8 ONNX port, tiny NLU head, geo join.
 
 ---
 
@@ -113,12 +115,31 @@ hard negatives mined from our own facets (same city + category decoys), keeping 
 60 eval questions held out. Distillation from bge-m3/gte can ride along as a second
 loss.
 
-## 7. Shrink experiments — quantization & Matryoshka (this section updates after the run)
+## 7. Shrink experiments — int8, Matryoshka, PCA
 
-Measured by `scripts/shrink_eval.py`: per-vector int8 quantization (dequantized
-ranking ≡ true int8 dot), naive dimension truncation (arctic-s is *not*
-Matryoshka-trained, so this is the pessimistic bound), and PCA fitted on our own
-13,199 vectors. Baseline float32: vector 95%/0.82, hybrid 95%/0.87.
+Measured by `scripts/shrink_eval.py`. Baseline float32: vector 95%/0.82, hybrid
+95%/0.87. How each variant is computed:
+
+- **int8** — per vector: scale so the largest |value| maps to 127, round to whole
+  bytes, dequantize back for scoring. This ranking is mathematically identical to
+  true on-device int8 dot products (same per-vector absmax scale), so quality is
+  measurable without any ONNX machinery.
+- **Truncation ("naive Matryoshka")** — keep the first N of the 384 numbers of
+  docs *and* queries, renormalize. A model truly trained the Matryoshka way
+  (MRL, after the nesting dolls) has its dimensions deliberately sorted by
+  importance, so every prefix is a valid shorter embedding. arctic-s is not such
+  a model — its meaning is smeared evenly across dimensions (dim #17 no more
+  important than dim #300, like judging a book by a random half of its pages),
+  so truncation is the pessimistic bound.
+- **PCA-128 / PCA-64** — fitted on our own 13,199 card vectors: subtract the mean
+  card, run SVD, keep the top-k directions in which the card cloud spreads most
+  (128 axes retain **76%** of total variance, 64 retain **58%**), project every
+  card onto them, renormalize to unit length. Queries get the same *frozen*
+  transform (same mean, same axes — fitted on cards only, never on questions).
+  Like photographing a 3D object from its most informative angle: drop
+  dimensions, keep recognizability. Unlike truncation, PCA *measures* which
+  mixtures of the 384 dims matter most on our cards, instead of assuming they
+  came pre-sorted.
 
 **Results** (`scripts/shrink_eval.py`, report in `efforts/2026-11-08-edge-embedder-bakeoff/eval/vector-shrink.md`; baseline row reproduces the bake-off numbers exactly — internal sanity ✓):
 
@@ -148,8 +169,59 @@ Plain-language reading:
 - The "+2pp" hybrid recall cells at trunc-64/pca-128 are **fusion noise, not gains**:
   a weaker vector leg shifts weight to BM25, which happened to rescue 1–2 questions
   into the top 10 — while overall ranking (MRR) got worse. Trust MRR here.
+- **PCA's failure mode is graceful, truncation's is not**: pca-64 still finds the
+  right card in the top 10 for 92% of questions while MRR collapses (0.82 → 0.61) —
+  broad neighborhoods survive ("taco place, not a dentist"), the fine ordering
+  inside them scrambles ("*which* taco place first"). Naive trunc-64 instead loses
+  the answer entirely for 1 in 4 questions (recall 77%).
+- **trunc-256 being free is a real (if useless) fact**: the 13k cards live in a
+  corner of the 384-dim space and don't exercise the last ~128 dims at all. A true
+  MRL fine-tune (train so every prefix stays a good embedding, on our synthetic
+  queries) would make 128-dim truncation safe — only worth it if ~3 MB ever
+  matters, which it doesn't (the DB is text-dominated).
 
-## 8. How to run
+## 8. What actually ships — the edge artifact
+
+Query flow on the device — two retrievers **in parallel**, fused by rank. This is
+*not* a retrieve-then-rerank pipeline:
+
+```
+"dog friendly post-surf food in Santa Cruz"
+     ├── BM25 leg (FTS5 word index over card text) ───► top-10 list A
+     └── arctic-s embeds the question (~314 ms, the    ┐
+         only expensive step)                           ▼
+         dot-product vs ALL 13,199 int8 vectors (~1–3 ms) → top-10 list B
+     └── RRF fuse A + B by rank position ─────────────► final top-10
+```
+
+Notes against common misconceptions:
+
+- **No candidate pre-selection stage.** The vector leg scans *all* 13,199 cards on
+  every query — ~5M multiply-adds ≈ 1–3 ms, noise next to the 314 ms query
+  encoding. At this scale brute force beats any prefilter, and a cross-encoder
+  "rerank" second pass would be *more* expensive (one neural pass per candidate),
+  not less.
+- **We embed the question text, not an "intent".** Intent (open-now, near-me,
+  cheap) is the separate JointBERT head from the roadmap — its output becomes
+  *filters* (city / type / open_now), not part of the similarity vector.
+
+Minimum shippable brain — **~18 MB**, keeps full hybrid quality:
+
+| Artifact | Contents | Size |
+|---|---|---|
+| vectors blob | int8 384-dim vectors + integer IDs | 5.1 MB |
+| display metadata | name, city, one-liner, URL — what the driver sees | ~3 MB |
+| BM25 word index | FTS5 inverted index (external-content mode) | ~10 MB |
+| *(optional)* full cards | long profiles, only if the agent explains them | ~40 MB |
+
+Why keep BM25 on the device at all: measured, vector-only matches hybrid recall
+(95%) but loses ranking height (MRR 0.82 vs 0.87) — and the word index is the
+insurance for exactly what a 33M-param model handles worst: **exact names and rare
+words** ("Find Jalisco's"). Today's 108 MB `search_arctic-s.db` is the *workbench*
+version (long profiles, duplicated FTS content); carving the ~18 MB artifact above
+is roadmap item 5.
+
+## 9. How to run
 
 ```bash
 # hybrid search (auto model from meta table)
@@ -172,7 +244,7 @@ HF_HOME=/opt/vllm/models/hf .venv/bin/python scripts/shrink_eval.py --device cud
 Env notes: models cached under `HF_HOME=/opt/vllm/models/hf` (home disk is nearly
 full); embed on a free GPU when possible (13k cards: 43 s on GPU vs ~16 h on CPU).
 
-## 9. Repo map
+## 10. Repo map
 
 ```
 data/                  SQLite artifacts (gitignored): kb.db, search*.db, OSM POIs
@@ -181,11 +253,12 @@ efforts/               dated effort dirs (spec/tasks/outcome per effort)
 research/              notes from online research (embedder survey 2026-11)
 ```
 
-## 10. Roadmap
+## 11. Roadmap
 
 1. int8 ONNX port of arctic-s + re-eval on target hardware (fallback: gte-modernbert).
 2. JointBERT-style dual-head NLU (intent + slots) on the chosen backbone.
 3. POI join-key blocker: link the 74k OSM POI coordinates to kb.db domains → H3 geo
    index for "near me".
 4. Contrastive fine-tune with synthetic queries + hard negatives.
-5. DB slimming: FTS5 external content, facets re-shape, text diet.
+5. DB slimming → carve the ~18 MB edge artifact (§8): FTS5 external content,
+   facets re-shape, text diet.
