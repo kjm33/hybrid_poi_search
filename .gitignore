@@ -1,0 +1,10 @@
+# generated data — sqlite DBs + LLM response caches (375 MB, rebuildable from scripts)
+data/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# local docs build
+STATE.md.html
