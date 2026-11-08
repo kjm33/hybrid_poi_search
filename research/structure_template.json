@@ -1,0 +1,13 @@
+{
+  "name": "Restauracja Pod Lipą",
+  "type": "restauracja",
+  "osm_tags": ["amenity=restaurant", "cuisine=polish"],
+  "location": "Kraków, Stare Miasto",
+  "short_description": "...",
+  "detailed_profile": "tekst naturalny do embeddowania",
+  "features": ["ogród", "dania wegańskie", "live music"],
+  "services": ["lunch", "kolacje", "imprezy firmowe"],
+  "atmosphere": "przytulna, rodzinna",
+  "opening_hours": "pn-pt 12-22, sb-nd 11-23",
+  "keywords": ["kuchnia polska", "tradycyjna", "ogród letni"]
+}
