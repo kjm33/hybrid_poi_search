@@ -8,6 +8,7 @@ Usage: .venv/bin/python scripts/eval_search.py
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sqlite3
 import sys
@@ -28,14 +29,23 @@ N = 10
 
 def main() -> None:
     from sentence_transformers import SentenceTransformer
-    import torch
 
-    qs = [json.loads(l) for l in (OUT / "questions.jsonl").read_text().splitlines()]
-    print(f"{len(qs)} questions")
-    con = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", default=str(DB), help="search DB to evaluate")
+    ap.add_argument("--questions", default=str(OUT / "questions.jsonl"),
+                    help="questions.jsonl to evaluate (report written next to it)")
+    ap.add_argument("--report", default="eval_report.md",
+                    help="report filename (written next to questions.jsonl)")
+    ap.add_argument("--device", default="cpu", help="cpu | cuda for query encoding")
+    args = ap.parse_args()
+
+    questions_path = Path(args.questions)
+    qs = [json.loads(l) for l in questions_path.read_text().splitlines()]
+    print(f"{len(qs)} questions · db={args.db}")
+    con = sqlite3.connect(f"file:{args.db}?mode=ro", uri=True)
     model_id = get_model_id(con)
-    st = SentenceTransformer(ST_IDS[model_id],
-                             device="cuda" if torch.cuda.is_available() else "cpu")
+    print(f"index model: {model_id}")
+    st = SentenceTransformer(ST_IDS[model_id], device=args.device)
     domains, V = load_vectors(con)
 
     # pre-encode all questions once
@@ -66,7 +76,7 @@ def main() -> None:
         lines += ["", f"## {m} misses ({len(metrics[m]['misses'])})"]
         lines += [f"- “{x['q']}” → target {x['target']} ({x['name']})"
                   for x in metrics[m]["misses"][:15]]
-    report = OUT / "eval_report.md"
+    report = questions_path.parent / args.report
     report.write_text("\n".join(lines))
     print("\n".join(lines[:8]))
     print(f"\nwrote {report}")

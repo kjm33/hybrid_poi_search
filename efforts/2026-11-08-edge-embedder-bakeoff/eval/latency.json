@@ -1,0 +1,29 @@
+[
+  {
+    "model": "bge-m3",
+    "dim": 1024,
+    "q_encode_ms_mean": 2826.4,
+    "q_encode_ms_p95": 4833.5,
+    "kb_per_doc_fp32": 4096,
+    "corpus_vec_mb_fp32_13199": 54.1,
+    "corpus_vec_mb_int8_13199": 13.5
+  },
+  {
+    "model": "gte-modernbert",
+    "dim": 768,
+    "q_encode_ms_mean": 1265.2,
+    "q_encode_ms_p95": 2441.5,
+    "kb_per_doc_fp32": 3072,
+    "corpus_vec_mb_fp32_13199": 40.5,
+    "corpus_vec_mb_int8_13199": 10.1
+  },
+  {
+    "model": "arctic-s",
+    "dim": 384,
+    "q_encode_ms_mean": 314.0,
+    "q_encode_ms_p95": 1079.3,
+    "kb_per_doc_fp32": 1536,
+    "corpus_vec_mb_fp32_13199": 20.3,
+    "corpus_vec_mb_int8_13199": 5.1
+  }
+]

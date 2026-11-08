@@ -24,10 +24,13 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DB = ROOT / "data" / "search.db"
-ST_IDS = {"bge-m3": "BAAI/bge-m3", "qwen3-0.6b": "Qwen/Qwen3-Embedding-0.6B"}
+ST_IDS = {"bge-m3": "BAAI/bge-m3", "qwen3-0.6b": "Qwen/Qwen3-Embedding-0.6B",
+          "gte-modernbert": "Alibaba-NLP/gte-modernbert-base",
+          "arctic-s": "Snowflake/snowflake-arctic-embed-s"}
 QUERY_PREFIX = {
     "qwen3-0.6b": "Instruct: Given a search query, retrieve the California amenity "
                   "that best matches\nQuery: ",
+    "arctic-s": "Represent this sentence for searching relevant passages: ",
 }
 RRF_K = 60
 

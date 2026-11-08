@@ -19,7 +19,9 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DB = ROOT / "data" / "kb.db"
-ST_IDS = {"bge-m3": "BAAI/bge-m3", "qwen3-0.6b": "Qwen/Qwen3-Embedding-0.6B"}
+ST_IDS = {"bge-m3": "BAAI/bge-m3", "qwen3-0.6b": "Qwen/Qwen3-Embedding-0.6B",
+          "gte-modernbert": "Alibaba-NLP/gte-modernbert-base",
+          "arctic-s": "Snowflake/snowflake-arctic-embed-s"}
 DUP_THRESHOLD = 0.97
 
 SCHEMA = """
@@ -43,6 +45,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="bge-m3", choices=sorted(ST_IDS))
     ap.add_argument("--reembed", action="store_true", help="re-embed even if rows exist")
+    ap.add_argument("--device", default="cuda", help="cpu | cuda (cuda needs ~2 GB free)")
+    ap.add_argument("--skip-dups", action="store_true",
+                    help="don't rewrite kb.db.near_dups (keeps the current model's pairs)")
     args = ap.parse_args()
 
     from sentence_transformers import SentenceTransformer
@@ -58,7 +63,7 @@ def main() -> None:
     todo = [r for r in rows if r["domain"] not in done]
     print(f"useful profiles: {len(rows)} | embedded: {len(done)} | to embed: {len(todo)}", flush=True)
 
-    st = SentenceTransformer(ST_IDS[args.model], device="cuda")
+    st = SentenceTransformer(ST_IDS[args.model], device=args.device)
     t0 = time.time()
     B = 256
     for i in range(0, len(todo), B):
@@ -76,6 +81,11 @@ def main() -> None:
             print(f"  {done_n}/{len(todo)} ({el:.0f}s, {done_n/max(el,1):.1f}/s)", flush=True)
 
     # ---- near-duplicate detection over all vectors of this model ----
+    if args.skip_dups:
+        print("near-dup scan skipped (--skip-dups)")
+        con.close()
+        print(f"done in {time.time()-t0:.0f}s")
+        return
     vecs, domains = [], []
     for domain, blob in con.execute("SELECT domain, vec FROM embeddings WHERE model=?", (args.model,)):
         domains.append(domain)
