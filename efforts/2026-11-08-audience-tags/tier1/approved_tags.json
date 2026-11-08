@@ -1,0 +1,40 @@
+{
+ "tags": [
+  "family_friendly",
+  "business_friendly",
+  "work_friendly",
+  "pet_friendly",
+  "romantic",
+  "groups_events",
+  "late_night",
+  "accessible",
+  "casual",
+  "upscale",
+  "cozy",
+  "community_focused",
+  "lively",
+  "seniors",
+  "beginner_friendly",
+  "adults_only",
+  "lgbtq_friendly"
+ ],
+ "definitions": {
+  "family_friendly": "A place that welcomes families with children: kids menus, play areas, children's programs, activities for all ages, child care.",
+  "business_friendly": "A place suited for business customers: meeting rooms, business lunches, corporate events, services for business travelers and colleagues.",
+  "work_friendly": "A place where people can work: wifi, laptop-friendly seating, quiet space to work, remote workers and students welcome.",
+  "pet_friendly": "A place that welcomes pets and dogs: dogs allowed, pet-friendly patio, pet amenities, animal-friendly policy.",
+  "romantic": "A romantic atmosphere for couples and date nights: candlelit dinner, intimate ambiance, romantic setting for two.",
+  "groups_events": "A place that hosts groups, parties and events: private event space, group dining, banquet rooms, party hosting, event venues.",
+  "late_night": "A place open late at night with nightlife: late-night hours, nightclub, dancing, bar atmosphere after dark.",
+  "accessible": "A place accessible to people with disabilities: wheelchair-accessible entrance, ADA compliance, accessible restrooms and facilities.",
+  "casual": "A casual, relaxed place for everyday visits: casual dining, informal atmosphere, no dress code, everyday meals with friends.",
+  "upscale": "An upscale, elegant, fine-dining experience: fine dining, refined ambiance, luxury setting, upscale cuisine and service.",
+  "cozy": "A cozy, intimate, comfortable atmosphere: warm cozy ambiance, small intimate space, comfortable relaxed setting.",
+  "community_focused": "A community-oriented place serving local residents: community gatherings, neighborhood events, community atmosphere.",
+  "lively": "A lively, vibrant, energetic atmosphere: vibrant ambiance, bustling energy, sports-bar excitement, music-filled social scene.",
+  "seniors": "A place serving seniors and elderly adults: senior living, assisted living, memory care, elder care, senior programs.",
+  "beginner_friendly": "Classes and activities suitable for beginners: beginner-level instruction, newcomers without experience welcome.",
+  "adults_only": "A venue restricted to adults: 21 and over, adults-only atmosphere, no children allowed.",
+  "lgbtq_friendly": "A place that is LGBTQ-friendly and affirming: welcoming to LGBTQ customers, inclusive pride-friendly atmosphere."
+ }
+}

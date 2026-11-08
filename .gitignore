@@ -8,3 +8,6 @@ __pycache__/
 
 # local docs build
 STATE.md.html
+
+# embedding matrix artifacts (rebuildable: tag_tier2.py phase1, ~54 min)
+*.npz
