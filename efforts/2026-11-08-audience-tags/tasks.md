@@ -79,3 +79,7 @@ busy. Fine-tuning embeddings: rejected for now, revisit triggers documented in t
 ## Done
 - [x] Solution research (online) + design discussion (this conversation)
 - [x] Plain-language report saved: `2026-11-08-audience-tags-solution-explained.md`
+- [x] Report enhanced (2026-11-09) with post-run numbers & mechanics: corrected
+      headline counts (153,168 facet rows / 79,038 spellings), Stage-4 union section,
+      gate outcome, echo alignment, tuned cutoffs, 572-call economics, five intuitions.
+      Note: the `.md.html` twin is a stale browser snapshot of the pre-enhancement md.
