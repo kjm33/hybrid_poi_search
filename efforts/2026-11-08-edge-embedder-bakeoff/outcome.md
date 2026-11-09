@@ -53,6 +53,10 @@ BM25 leg already nearly covers.
   **43 s on GPU0 (304 docs/s)** vs a projected ~16 h in fp16-on-CPU.
 - qwen3-0.6b excluded (ruled out on device-fit: ~600 MB int8, SmoothQuant needed);
   an external process is still embedding it into kb.db (separate model key, harmless).
+  Addendum 2026-11-09 — that embed finished and the full 60-question eval ran
+  (`../2026-11-07-amenity-knowledge-base/eval/eval_qwen3-0.6b.md`): vector 92%/0.80,
+  hybrid 95%/0.84 — below bge-m3 on recall in both modes, so it is out on quality
+  too, not just device-fit.
 
 ## Next steps (separate efforts)
 

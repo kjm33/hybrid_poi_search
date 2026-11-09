@@ -106,6 +106,13 @@ by an agent via MCP server.
       - A/B (42 profiles, 10 probes): bge-m3 and qwen3-0.6b BOTH hit@1 = 10/10, MRR 1.00
         (ceiling — corpus too small to separate). Picked **bge-m3** (proven, plan default,
         1024-dim; switch later = one 5-min re-embed).
+      - Follow-up 2026-11-09: full 60-question eval of qwen3-0.6b (embedded on CPU,
+        both GPUs busy; `data/search_qwen3-0.6b.db`): **vector 92%/0.80, hybrid 95%/0.84**
+        vs bge-m3's 95%/0.75 · 97%/0.85 → **bge-m3 stays**. qwen3 uniquely misses 3
+        vector questions (slapfish lobster-roll, BoA mobile-banking, baja fresh) and
+        finds only 1 that bge misses (steamer lane); better vector MRR (0.80 vs 0.75)
+        doesn't buy back the 2 lost hybrid questions. Same size (595M vs 568M), same
+        dim — no footprint win either. Report: `eval/eval_qwen3-0.6b.md`.
       - embed_all: 13,199 vectors in 160s (84/s), dim 1024.
       - near_dups cos>0.97: 58 pairs. Top = true mirrors (kevins/kevinnoodlehouse 0.998,
         fire.ca.gov/calfire.ca.gov 0.997) BUT several are template-similar DISTINCT

@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS near_dups (
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="bge-m3", help="which embedding model's vectors to copy")
+    ap.add_argument("--out", default=str(OUT), help="output search DB path "
+                    "(default: data/search.db)")
     args = ap.parse_args()
 
     kb = sqlite3.connect(f"file:{KB}?mode=ro", uri=True)
@@ -68,7 +70,7 @@ def main() -> None:
               for r in enrich.execute("SELECT domain, title, fm_url FROM page_quality")}
     enrich.close()
 
-    out = sqlite3.connect(OUT)
+    out = sqlite3.connect(args.out)
     out.executescript(SCHEMA)
     out.row_factory = sqlite3.Row
 
